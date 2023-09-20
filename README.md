@@ -1,2 +1,3 @@
-# fsm
-Finite State Machine library for embedded applications
+# `fsm``
+
+Finite State Machine library written in C.
