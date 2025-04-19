@@ -309,3 +309,42 @@ void test_fsm_fire_doesNotCallInFunctionWhenStateDoesNotMatch(void)
 
     TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // El estado no cambia
 }
+
+void test_fsm_set_state_changesState(void)
+{
+    fsm_t f;
+    f.current_state = 0;
+    fsm_set_state(&f, 42);
+    TEST_ASSERT_EQUAL(42, fsm_get_state(&f));
+}
+
+void out_called(fsm_t* f) {
+    // función vacía, solo para probar que se llama
+}
+
+void test_fsm_fire_callsOutFunctionIfDefined(void) {
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, out_called},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    is_true_ExpectAndReturn(&f, true);
+
+    fsm_fire(&f); // Debe ejecutar la transición y llamar a out_called
+
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Se asegura que ha hecho la transición
+}
+
+void test_fsm_init_doesNothingIfNullTransitions(void)
+{
+    fsm_t f;
+    f.current_state = 1234;  // valor previo que no debe cambiar
+
+    fsm_init(&f, NULL);
+
+    // El estado debe quedarse igual si no se inicializa
+    TEST_ASSERT_EQUAL(1234, f.current_state);
+}

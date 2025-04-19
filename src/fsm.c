@@ -14,6 +14,9 @@
 /* Other includes */
 #include "fsm.h"
 
+void* fsm_malloc(size_t s);
+void  fsm_free(void* p);
+
 fsm_t *fsm_new(fsm_trans_t *p_tt)
 {
     if (p_tt == NULL)
@@ -72,6 +75,8 @@ void fsm_fire(fsm_t *p_fsm)
         }
     }
 }
+
+
 // GCOVR_EXCL_START
 void* __attribute__((weak)) fsm_malloc(size_t s) {
     return malloc(s);
