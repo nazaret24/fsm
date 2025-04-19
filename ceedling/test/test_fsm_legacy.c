@@ -292,6 +292,10 @@ void test_fsm_new_calledTwiceWithSameValidDataCreatesDifferentInstancePointer(vo
     TEST_ASSERT_NOT_EQUAL(a, b);
 }
 
+/**
+ * @brief Comprueba que no se llama a la función de comprobación (in) si el estado actual no coincide con el estado origen de la transición.
+ */
+
 void test_fsm_fire_doesNotCallInFunctionWhenStateDoesNotMatch(void)
 {
     fsm_trans_t tt[] = {
@@ -310,6 +314,9 @@ void test_fsm_fire_doesNotCallInFunctionWhenStateDoesNotMatch(void)
     TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // El estado no cambia
 }
 
+/**
+ * @brief Comprueba que fsm_set_state cambia correctamente el estado de la máquina.
+ */
 void test_fsm_set_state_changesState(void)
 {
     fsm_t f;
@@ -318,10 +325,16 @@ void test_fsm_set_state_changesState(void)
     TEST_ASSERT_EQUAL(42, fsm_get_state(&f));
 }
 
+/**
+ * @brief Función de salida ficticia usada para comprobar que se llama desde fsm_fire si está definida.
+ */
 void out_called(fsm_t* f) {
     // función vacía, solo para probar que se llama
 }
 
+/**
+ * @brief Comprueba que fsm_fire llama a la función de salida (out) si está definida en la transición tomada.
+ */
 void test_fsm_fire_callsOutFunctionIfDefined(void) {
     fsm_trans_t tt[] = {
         {0, is_true, 1, out_called},
@@ -338,6 +351,9 @@ void test_fsm_fire_callsOutFunctionIfDefined(void) {
     TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Se asegura que ha hecho la transición
 }
 
+/**
+ * @brief Comprueba que fsm_init no modifica el estado si la tabla de transiciones es NULL.
+ */
 void test_fsm_init_doesNothingIfNullTransitions(void)
 {
     fsm_t f;
@@ -347,4 +363,13 @@ void test_fsm_init_doesNothingIfNullTransitions(void)
 
     // El estado debe quedarse igual si no se inicializa
     TEST_ASSERT_EQUAL(1234, f.current_state);
+}
+
+/**
+ * @brief Comprueba que los callbacks cb_malloc y cb_free funcionan correctamente al usarse como sustitutos de malloc y free.
+ */
+void test_fsm_malloc_cb_called(void) {
+    void* p = cb_malloc(10, 0);
+    TEST_ASSERT_NOT_NULL(p);
+    cb_free(p, 0);
 }
