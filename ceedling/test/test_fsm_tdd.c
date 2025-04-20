@@ -445,5 +445,5 @@ void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
 
     fsm_t* f = fsm_new(tt);
 
-    TEST_ASSERT_NULL(f);
+    TEST_ASSERT_NULL(f); 
 }
