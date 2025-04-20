@@ -47,6 +47,7 @@ int fsm_init(fsm_t *p_fsm, fsm_trans_t *p_tt)
         p_fsm->p_tt = p_tt;
         p_fsm->current_state = p_tt->orig_state;
     }
+    return 0;
 }
 
 int fsm_get_state(fsm_t *p_fsm)
