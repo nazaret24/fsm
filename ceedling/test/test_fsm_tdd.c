@@ -465,3 +465,22 @@ void test_fsm_fire_guardNullIsTreatedAsTrue(void)
 
     TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Debe haber hecho la transición
 }
+
+/**
+ * @brief Comprueba que no se evalúa una transición con guarda NULL si el estado actual no coincide con orig_state
+ */
+void test_fsm_fire_guardNullNoTransitionIfStateMismatch(void)
+{
+    fsm_trans_t tt[] = {
+        {1, NULL, 2, NULL}, // El estado actual no coincide con orig_state
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+    f.current_state = 0;
+
+    fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // No debe transicionar
+}
