@@ -7,7 +7,7 @@
 
 #ifndef FSM_H_
 #define FSM_H_
-
+#define FSM_MAX_TRANSITIONS 128
 /* Includes ------------------------------------------------------------------*/
 /* Standard C includes */
 #include <stdbool.h>

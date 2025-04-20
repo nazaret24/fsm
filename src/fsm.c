@@ -87,3 +87,4 @@ void __attribute__((weak)) fsm_free(void* p) {
     free(p);
 }
 // GCOVR_EXCL_STOP
+

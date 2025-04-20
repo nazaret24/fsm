@@ -383,3 +383,24 @@ void test_fsm_malloc_cb_called(void) {
     TEST_ASSERT_NOT_NULL(p);
     cb_free(p, 0);
 }
+
+/**
+ * @brief Devuelve 0 si hay más de FSM_MAX_TRANSITIONS
+ */
+void test_fsm_init_returns0WhenTooManyTransitions(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[FSM_MAX_TRANSITIONS + 2];
+
+    for (int i = 0; i < FSM_MAX_TRANSITIONS + 1; i++) {
+        tt[i].orig_state = i;
+        tt[i].in = is_true;
+        tt[i].dest_state = i + 1;
+        tt[i].out = do_nothing;
+    }
+    tt[FSM_MAX_TRANSITIONS + 1] = (fsm_trans_t){-1, NULL, -1, NULL};
+
+    int result = fsm_init(&f, tt);
+
+    TEST_ASSERT_EQUAL(0, result);
+}
