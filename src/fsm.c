@@ -27,6 +27,8 @@ fsm_t *fsm_new(fsm_trans_t *p_tt)
     {
         return NULL;
     }
+
+    
     fsm_t *p_fsm = (fsm_t *)fsm_malloc(sizeof(fsm_t));
     if (p_fsm != NULL)
     {

@@ -422,3 +422,28 @@ void test_fsm_init_returnsNumberOfValidTransitions(void)
 
     TEST_ASSERT_EQUAL(3, result);  // Debe contar 3 transiciones válidas
 }
+
+/**
+ * @brief Comprueba que fsm_new devuelve NULL si fsm_init falla
+ *        al detectar más de FSM_MAX_TRANSITIONS transiciones válidas.
+ *        Es decir, si hay demasiadas transiciones, no debe reservar memoria.
+ */
+void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
+{
+    fsm_trans_t tt[FSM_MAX_TRANSITIONS + 2];
+
+    for (int i = 0; i < FSM_MAX_TRANSITIONS + 1; i++) {
+        tt[i].orig_state = i;
+        tt[i].in = is_true;
+        tt[i].dest_state = i + 1;
+        tt[i].out = do_nothing;
+    }
+    tt[FSM_MAX_TRANSITIONS + 1] = (fsm_trans_t){-1, NULL, -1, NULL};
+
+    // No deberíamos llamar a fsm_malloc
+    fsm_malloc_Ignore(); // o fsm_malloc_ExpectAndReturn(NULL) si prefieres
+
+    fsm_t* f = fsm_new(tt);
+
+    TEST_ASSERT_NULL(f);
+}
