@@ -431,7 +431,6 @@ void test_fsm_init_returnsNumberOfValidTransitions(void)
 void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
 {
     fsm_trans_t tt[FSM_MAX_TRANSITIONS + 2];
-
     for (int i = 0; i < FSM_MAX_TRANSITIONS + 1; i++) {
         tt[i].orig_state = i;
         tt[i].in = is_true;
@@ -440,10 +439,11 @@ void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
     }
     tt[FSM_MAX_TRANSITIONS + 1] = (fsm_trans_t){-1, NULL, -1, NULL};
 
-    // No deberíamos llamar a fsm_malloc
-    fsm_malloc_Ignore(); // o fsm_malloc_ExpectAndReturn(NULL) si prefieres
+    void *fake_ptr = (void*)0xDEADBEEF;
+    fsm_malloc_IgnoreAndReturn(fake_ptr);    // Simula malloc
+    fsm_free_Expect(fake_ptr);               // Espera que se libere
 
-    fsm_t* f = fsm_new(tt);
+    fsm_t *f = fsm_new(tt);
 
-    TEST_ASSERT_NULL(f); 
+    TEST_ASSERT_NULL(f);
 }

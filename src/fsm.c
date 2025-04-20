@@ -23,17 +23,25 @@ fsm_t *fsm_new(fsm_trans_t *p_tt)
     {
         return NULL;
     }
+
     if ((p_tt->orig_state == -1) || (p_tt->in == NULL) || (p_tt->dest_state == -1))
     {
         return NULL;
     }
 
-    
     fsm_t *p_fsm = (fsm_t *)fsm_malloc(sizeof(fsm_t));
-    if (p_fsm != NULL)
+    if (p_fsm == NULL)
     {
-        fsm_init(p_fsm, p_tt);
+        return NULL;
     }
+
+    int num = fsm_init(p_fsm, p_tt);
+    if (num == 0)
+    {
+        fsm_free(p_fsm);
+        return NULL;
+    }
+
     return p_fsm;
 }
 
