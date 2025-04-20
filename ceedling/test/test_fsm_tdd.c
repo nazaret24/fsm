@@ -538,7 +538,7 @@ void test_fsm_fire_returns1WhenGuardFunctionReturnsTrue(void)
 
     fsm_init(&f, tt);
     is_true_ExpectAndReturn(&f, true);
-
+    do_nothing_Expect(&f); // Espera que se llame
     int res = fsm_fire(&f);
 
     TEST_ASSERT_EQUAL(1, res);

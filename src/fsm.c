@@ -89,25 +89,30 @@ int fsm_fire(fsm_t *p_fsm)
 
     for (p_t = p_fsm->p_tt; p_t->orig_state >= 0; ++p_t)
     {
-        if (p_fsm->current_state == p_t->orig_state)
+        if (p_t->orig_state == p_fsm->current_state)
         {
             found = true;
+
+            // Si la función de guarda es NULL (siempre cierta) o devuelve true:
             if (p_t->in == NULL || p_t->in(p_fsm))
             {
                 p_fsm->current_state = p_t->dest_state;
-                if (p_t->out)
+
+                if (p_t->out != NULL)
                 {
                     p_t->out(p_fsm);
                 }
-            } 
+
+                return 1; // Transición realizada
+            }
         }
     }
+
     if (found)
-        return 0; // Hay transiciones posibles, pero ninguna cumple la condición
-
-    return -1; // No hay transiciones para este estado
+        return 0;  // Hay transiciones desde el estado actual, pero ninguna válida
+    else
+        return -1; // Ninguna transición para el estado actual
 }
-
 
 // GCOVR_EXCL_START
 void* __attribute__((weak)) fsm_malloc(size_t s) {
