@@ -42,12 +42,24 @@ void fsm_destroy(fsm_t *p_fsm)
 
 int fsm_init(fsm_t *p_fsm, fsm_trans_t *p_tt)
 {
-    if (p_fsm == NULL || p_tt == NULL)
-    {
+    if (p_fsm == NULL || p_tt == NULL) {
         return 0;
     }
+
+    int count = 0;
+    fsm_trans_t *t;
+
+    for (t = p_tt; t->orig_state != -1; t++) {
+        count++;
+        if (count > FSM_MAX_TRANSITIONS) {
+            return 0;
+        }
+    }
+
     p_fsm->p_tt = p_tt;
     p_fsm->current_state = p_tt->orig_state;
+
+    return count;
 }
 
 int fsm_get_state(fsm_t *p_fsm)

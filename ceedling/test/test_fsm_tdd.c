@@ -404,3 +404,21 @@ void test_fsm_init_returns0WhenTooManyTransitions(void)
 
     TEST_ASSERT_EQUAL(0, result);
 }
+
+/**
+ * @brief Comprueba que fsm_init devuelve el número de transiciones válidas
+ */
+void test_fsm_init_returnsNumberOfValidTransitions(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing},
+        {1, is_true, 2, do_nothing},
+        {2, is_true, 3, do_nothing},
+        {-1, NULL, -1, NULL} // Fin de tabla
+    };
+
+    int result = fsm_init(&f, tt);
+
+    TEST_ASSERT_EQUAL(3, result);  // Debe contar 3 transiciones válidas
+}
