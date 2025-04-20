@@ -523,3 +523,23 @@ void test_fsm_fire_returns0WhenGuardReturnsFalse(void)
 
     TEST_ASSERT_EQUAL(0, res);
 }
+
+/**
+ * @brief Devuelve 1 si hay al menos una transición para el estado actual
+ *        con la función de guarda que devuelve true.
+ */
+void test_fsm_fire_returns1WhenGuardFunctionReturnsTrue(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing}, // transición válida
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_init(&f, tt);
+    is_true_ExpectAndReturn(&f, true);
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, res);
+}
