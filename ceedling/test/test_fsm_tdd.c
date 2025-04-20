@@ -484,3 +484,23 @@ void test_fsm_fire_guardNullNoTransitionIfStateMismatch(void)
 
     TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // No debe transicionar
 }
+
+/**
+ * @brief fsm_fire devuelve -1 si no hay transiciones para el estado actual
+ */
+void test_fsm_fire_returnsMinus1WhenNoTransitionsMatchCurrentState(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {1, is_true, 2, do_nothing},  // Estado inicial ≠ 0
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_init(&f, tt);
+    f.current_state = 0; // No hay transiciones para este estado
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(-1, res);
+}
+
