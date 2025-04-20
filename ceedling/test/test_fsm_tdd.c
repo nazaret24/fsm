@@ -447,3 +447,21 @@ void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
 
     TEST_ASSERT_NULL(f);
 }
+
+/**
+ * @brief Si la función de guarda es NULL, se debe considerar siempre como verdadera.
+ */
+void test_fsm_fire_guardNullIsTreatedAsTrue(void)
+{
+    fsm_trans_t tt[] = {
+        {0, NULL, 1, NULL}, // Guarda NULL ⇒ se considera true
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Debe haber hecho la transición
+}
