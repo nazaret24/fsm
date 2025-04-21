@@ -277,7 +277,7 @@ void test_fsm_fire_callsFirstIsTrueFromState0AndThenIsTrue2FromState1(void)
     fsm_init(&f, tt);
     res = fsm_get_state(&f);
 
-    TEST_IGNORE();
+
 }
 
 /**
