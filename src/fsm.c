@@ -23,15 +23,25 @@ fsm_t *fsm_new(fsm_trans_t *p_tt)
     {
         return NULL;
     }
+
     if ((p_tt->orig_state == -1) || (p_tt->in == NULL) || (p_tt->dest_state == -1))
     {
         return NULL;
     }
+
     fsm_t *p_fsm = (fsm_t *)fsm_malloc(sizeof(fsm_t));
-    if (p_fsm != NULL)
+    if (p_fsm == NULL)
     {
-        fsm_init(p_fsm, p_tt);
+        return NULL;
     }
+
+    int num = fsm_init(p_fsm, p_tt);
+    if (num == 0)
+    {
+        fsm_free(p_fsm);
+        return NULL;
+    }
+
     return p_fsm;
 }
 
@@ -40,13 +50,26 @@ void fsm_destroy(fsm_t *p_fsm)
     fsm_free(p_fsm);
 }
 
-void fsm_init(fsm_t *p_fsm, fsm_trans_t *p_tt)
+int fsm_init(fsm_t *p_fsm, fsm_trans_t *p_tt)
 {
-    if (p_tt != NULL)
-    {
-        p_fsm->p_tt = p_tt;
-        p_fsm->current_state = p_tt->orig_state;
+    if (p_fsm == NULL || p_tt == NULL) {
+        return 0;
     }
+
+    int count = 0;
+    fsm_trans_t *t;
+
+    for (t = p_tt; t->orig_state != -1; t++) {
+        count++;
+        if (count > FSM_MAX_TRANSITIONS) {
+            return 0;
+        }
+    }
+
+    p_fsm->p_tt = p_tt;
+    p_fsm->current_state = p_tt->orig_state;
+
+    return count;
 }
 
 int fsm_get_state(fsm_t *p_fsm)
@@ -59,23 +82,37 @@ void fsm_set_state(fsm_t *p_fsm, int state)
     p_fsm->current_state = state;
 }
 
-void fsm_fire(fsm_t *p_fsm)
+int fsm_fire(fsm_t *p_fsm)
 {
     fsm_trans_t *p_t;
+    bool found = false;
+
     for (p_t = p_fsm->p_tt; p_t->orig_state >= 0; ++p_t)
     {
-        if ((p_fsm->current_state == p_t->orig_state) && p_t->in(p_fsm))
+        if (p_t->orig_state == p_fsm->current_state)
         {
-            p_fsm->current_state = p_t->dest_state;
-            if (p_t->out)
+            found = true;
+
+            // Si la función de guarda es NULL (siempre cierta) o devuelve true:
+            if (p_t->in == NULL || p_t->in(p_fsm))
             {
-                p_t->out(p_fsm);
+                p_fsm->current_state = p_t->dest_state;
+
+                if (p_t->out != NULL)
+                {
+                    p_t->out(p_fsm);
+                }
+
+                return 1; // Transición realizada
             }
-            break;
         }
     }
-}
 
+    if (found)
+        return 0;  // Hay transiciones desde el estado actual, pero ninguna válida
+    else
+        return -1; // Ninguna transición para el estado actual
+}
 
 // GCOVR_EXCL_START
 void* __attribute__((weak)) fsm_malloc(size_t s) {
@@ -86,3 +123,4 @@ void __attribute__((weak)) fsm_free(void* p) {
     free(p);
 }
 // GCOVR_EXCL_STOP
+

@@ -7,8 +7,9 @@
 
 #include <stdlib.h>
 
+
 /**
- * @file test_fsm_legacy.c
+ * @file test_fsm_tdd.c
  * @author 
  * @author 
  * @brief Tests for existing fsm module
@@ -68,7 +69,14 @@ void test_fsm_new_nullWhenNullTransition(void)
  */
 void test_fsm_init_falseWhenNullFsm(void)
 {
-    TEST_IGNORE(); // No se puede testear, fsm_init no devuelve nada
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing},
+        {-1, NULL, -1, NULL}
+    };
+
+    int result = fsm_init(NULL, tt);
+
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 /**
@@ -77,7 +85,9 @@ void test_fsm_init_falseWhenNullFsm(void)
  */
 void test_fsm_init_falseWhenNullTransitions(void)
 {
-    TEST_IGNORE(); // No se puede testear, fsm_init no devuelve nada
+    fsm_t f;
+    int result = fsm_init(&f, NULL);
+    TEST_ASSERT_EQUAL(0, result);
 }
 
 /**
@@ -372,4 +382,164 @@ void test_fsm_malloc_cb_called(void) {
     void* p = cb_malloc(10, 0);
     TEST_ASSERT_NOT_NULL(p);
     cb_free(p, 0);
+}
+
+/**
+ * @brief Devuelve 0 si hay más de FSM_MAX_TRANSITIONS
+ */
+void test_fsm_init_returns0WhenTooManyTransitions(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[FSM_MAX_TRANSITIONS + 2];
+
+    for (int i = 0; i < FSM_MAX_TRANSITIONS + 1; i++) {
+        tt[i].orig_state = i;
+        tt[i].in = is_true;
+        tt[i].dest_state = i + 1;
+        tt[i].out = do_nothing;
+    }
+    tt[FSM_MAX_TRANSITIONS + 1] = (fsm_trans_t){-1, NULL, -1, NULL};
+
+    int result = fsm_init(&f, tt);
+
+    TEST_ASSERT_EQUAL(0, result);
+}
+
+/**
+ * @brief Comprueba que fsm_init devuelve el número de transiciones válidas
+ */
+void test_fsm_init_returnsNumberOfValidTransitions(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing},
+        {1, is_true, 2, do_nothing},
+        {2, is_true, 3, do_nothing},
+        {-1, NULL, -1, NULL} // Fin de tabla
+    };
+
+    int result = fsm_init(&f, tt);
+
+    TEST_ASSERT_EQUAL(3, result);  // Debe contar 3 transiciones válidas
+}
+
+/**
+ * @brief Comprueba que fsm_new devuelve NULL si fsm_init falla
+ *        al detectar más de FSM_MAX_TRANSITIONS transiciones válidas.
+ *        Es decir, si hay demasiadas transiciones, no debe reservar memoria.
+ */
+void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
+{
+    fsm_trans_t tt[FSM_MAX_TRANSITIONS + 2];
+    for (int i = 0; i < FSM_MAX_TRANSITIONS + 1; i++) {
+        tt[i].orig_state = i;
+        tt[i].in = is_true;
+        tt[i].dest_state = i + 1;
+        tt[i].out = do_nothing;
+    }
+    tt[FSM_MAX_TRANSITIONS + 1] = (fsm_trans_t){-1, NULL, -1, NULL};
+
+    void *fake_ptr = (void*)0xDEADBEEF;
+    fsm_malloc_IgnoreAndReturn(fake_ptr);    // Simula malloc
+    fsm_free_Expect(fake_ptr);               // Espera que se libere
+
+    fsm_t *f = fsm_new(tt);
+
+    TEST_ASSERT_NULL(f);
+}
+
+/**
+ * @brief Si la función de guarda es NULL, se debe considerar siempre como verdadera.
+ */
+void test_fsm_fire_guardNullIsTreatedAsTrue(void)
+{
+    fsm_trans_t tt[] = {
+        {0, NULL, 1, NULL}, // Guarda NULL ⇒ se considera true
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Debe haber hecho la transición
+}
+
+/**
+ * @brief Comprueba que no se evalúa una transición con guarda NULL si el estado actual no coincide con orig_state
+ */
+void test_fsm_fire_guardNullNoTransitionIfStateMismatch(void)
+{
+    fsm_trans_t tt[] = {
+        {1, NULL, 2, NULL}, // El estado actual no coincide con orig_state
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+    f.current_state = 0;
+
+    fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // No debe transicionar
+}
+
+/**
+ * @brief fsm_fire devuelve -1 si no hay transiciones para el estado actual
+ */
+void test_fsm_fire_returnsMinus1WhenNoTransitionsMatchCurrentState(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {1, is_true, 2, do_nothing},  // Estado inicial ≠ 0
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_init(&f, tt);
+    f.current_state = 0; // No hay transiciones para este estado
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(-1, res);
+}
+
+/**
+ * @brief fsm_fire devuelve 0 si hay transiciones para el estado actual
+ *        pero la función de guarda devuelve false.
+ */
+void test_fsm_fire_returns0WhenGuardReturnsFalse(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing},  // Tiene transición para el estado 0
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_init(&f, tt);
+    is_true_ExpectAndReturn(&f, false); // La guarda devuelve false
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(0, res);
+}
+
+/**
+ * @brief Devuelve 1 si hay al menos una transición para el estado actual
+ *        con la función de guarda que devuelve true.
+ */
+void test_fsm_fire_returns1WhenGuardFunctionReturnsTrue(void)
+{
+    fsm_t f;
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing}, // transición válida
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_init(&f, tt);
+    is_true_ExpectAndReturn(&f, true);
+    do_nothing_Expect(&f); // Espera que se llame
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, res);
 }
