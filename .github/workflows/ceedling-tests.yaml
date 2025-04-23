@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - name: Current Repo Clone
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
       - name: Install Ruby
         uses: ruby/setup-ruby@v1
         with:
