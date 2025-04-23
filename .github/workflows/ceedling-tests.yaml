@@ -1,5 +1,11 @@
 name: Ceedling Testing
-on: workflow_dispatch
+on:   
+  push:
+    branches: [main, b3_ci_cd]
+  pull_request:
+    branches: [main, b3_ci_cd]
+  workflow_dispatch:
+
 jobs:
   test:
     runs-on: ubuntu-20.04
@@ -15,3 +21,33 @@ jobs:
       - name: Run Unit Tests
         run: |
           CUR=$PWD; for i in `find . -type d -name 'ceedling'`; do cd $CUR; echo $i; cd $i; ceedling test:all; done
+      - name: Ejecuta cobertura
+        run: |
+          cd ceedling
+          ceedling gcov:all utils:gcov
+      - name: Genera documentación Doxygen
+        run: |
+          doxygen docs/Doxyfile
+
+      - name: Sube resultados como artefacto
+        uses: actions/upload-artifact@v3
+        with:
+          name: cobertura-y-doc
+          path: |
+            ceedling/build/artifacts/gcov
+            docs/html
+
+      - name: Prepara contenido para GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p gh-pages
+          cp -r ceedling/build/artifacts/gcov/* gh-pages/
+          cp -r docs/html/* gh-pages/
+          touch gh-pages/.nojekyll
+
+      - name: Publica en GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
