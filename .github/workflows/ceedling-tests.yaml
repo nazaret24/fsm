@@ -24,7 +24,7 @@ jobs:
       - name: Ejecuta cobertura
         run: |
           cd ceedling
-          ceedling gcov:all utils:gcov
+          ceedling gcov:all utils:gcov 
       - name: Genera documentación Doxygen
         run: |
           doxygen docs/Doxyfile
