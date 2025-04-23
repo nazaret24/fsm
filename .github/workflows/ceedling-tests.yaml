@@ -33,7 +33,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: cobertura-y-doc
-          path: |
+          path: | 
             ceedling/build/artifacts/gcov
             docs/html
 
