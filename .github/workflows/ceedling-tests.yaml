@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
+  test:  
     runs-on: ubuntu-22.04
     steps:
       - name: Current Repo Clone
