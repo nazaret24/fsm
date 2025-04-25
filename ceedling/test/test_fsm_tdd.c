@@ -210,7 +210,7 @@ void test_fsm_fire_checkFunctionCalledWithFsmPointerFromFsmFire(void)
  *
  */
 void test_fsm_new_nullWhenFsmMallocReturnsNull(void)
-{
+{ 
     fsm_trans_t tt[] = {
         {0, is_true, 1, NULL},
         {-1, NULL, -1, NULL}
