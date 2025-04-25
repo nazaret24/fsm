@@ -7,7 +7,7 @@ var indexSectionsWithContent =
   4: "cdiop",
   5: "f",
   6: "ft",
-  7: "ft"
+  7: "fp"
 };
 
 var indexSectionNames =
