@@ -203,29 +203,6 @@ void test_fsm_fire_checkFunctionCalledWithFsmPointerFromFsmFire(void)
     fsm_fire(&f);
 }
 
-/** 
- * @brief Comprueba que el fsm_fire funciona y tiene el estado correcto cuando la transición devuelve true (cambia) y cuando devuelve false (mantiene)
- * 
- */
-TEST_CASE(false, 0)
-TEST_CASE(true, 1)
-void test_fsm_fire_checkFunctionIsCalledAndResultIsImportantForTransition(bool returnValue, int expectedState)
-{
-    fsm_trans_t tt[] = {
-        {0, is_true, 1, NULL},
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_t f;
-    fsm_init(&f, tt);
-
-    is_true_ExpectAndReturn(&f, returnValue);
-
-    fsm_fire(&f);
-
-    TEST_ASSERT_EQUAL(expectedState, fsm_get_state(&f));
-}
-
 
 /**
  * @brief La creación de una máquina de estados devuelve NULL si la reserva de memoria falla.
@@ -258,25 +235,6 @@ void test_fsm_destroy_callsFsmFree(void)
     fsm_free_Expect(f);
 
     fsm_destroy(f);
-}
-
-/**
- * @brief Comprueba que solo se llame a la función de guarda que toca según el estado actual
- * 
- */
-void test_fsm_fire_callsFirstIsTrueFromState0AndThenIsTrue2FromState1(void)
-{
-    fsm_trans_t tt[] = {
-        {0, is_true, 1, NULL},
-        {1, is_true2, 0, NULL},    
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_t f;
-    int res;
-    fsm_init(&f, tt);
-    res = fsm_get_state(&f);
-
 }
 
 /**
@@ -316,8 +274,6 @@ void test_fsm_fire_doesNotCallInFunctionWhenStateDoesNotMatch(void)
     fsm_init(&f, tt); // estado actual será 1, pero vamos a cambiarlo a 0
     f.current_state = 0;
 
-    // is_true NUNCA debe llamarse, así que no ponemos ningún Expect
-
     fsm_fire(&f);
 
     TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // El estado no cambia
@@ -332,32 +288,6 @@ void test_fsm_set_state_changesState(void)
     f.current_state = 0;
     fsm_set_state(&f, 42);
     TEST_ASSERT_EQUAL(42, fsm_get_state(&f));
-}
-
-/**
- * @brief Función de salida ficticia usada para comprobar que se llama desde fsm_fire si está definida.
- */
-void out_called(fsm_t* f) {
-    // función vacía, solo para probar que se llama
-}
-
-/**
- * @brief Comprueba que fsm_fire llama a la función de salida (out) si está definida en la transición tomada.
- */
-void test_fsm_fire_callsOutFunctionIfDefined(void) {
-    fsm_trans_t tt[] = {
-        {0, is_true, 1, out_called},
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_t f;
-    fsm_init(&f, tt);
-
-    is_true_ExpectAndReturn(&f, true);
-
-    fsm_fire(&f); // Debe ejecutar la transición y llamar a out_called
-
-    TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Se asegura que ha hecho la transición
 }
 
 /**
@@ -448,24 +378,6 @@ void test_fsm_new_returnsNullIfInitFailsDueToTooManyTransitions(void)
 }
 
 /**
- * @brief Si la función de guarda es NULL, se debe considerar siempre como verdadera.
- */
-void test_fsm_fire_guardNullIsTreatedAsTrue(void)
-{
-    fsm_trans_t tt[] = {
-        {0, NULL, 1, NULL}, // Guarda NULL ⇒ se considera true
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_t f;
-    fsm_init(&f, tt);
-
-    fsm_fire(&f);
-
-    TEST_ASSERT_EQUAL(1, fsm_get_state(&f)); // Debe haber hecho la transición
-}
-
-/**
  * @brief Comprueba que no se evalúa una transición con guarda NULL si el estado actual no coincide con orig_state
  */
 void test_fsm_fire_guardNullNoTransitionIfStateMismatch(void)
@@ -482,45 +394,6 @@ void test_fsm_fire_guardNullNoTransitionIfStateMismatch(void)
     fsm_fire(&f);
 
     TEST_ASSERT_EQUAL(0, fsm_get_state(&f)); // No debe transicionar
-}
-
-/**
- * @brief fsm_fire devuelve -1 si no hay transiciones para el estado actual
- */
-void test_fsm_fire_returnsMinus1WhenNoTransitionsMatchCurrentState(void)
-{
-    fsm_t f;
-    fsm_trans_t tt[] = {
-        {1, is_true, 2, do_nothing},  // Estado inicial ≠ 0
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_init(&f, tt);
-    f.current_state = 0; // No hay transiciones para este estado
-
-    int res = fsm_fire(&f);
-
-    TEST_ASSERT_EQUAL(-1, res);
-}
-
-/**
- * @brief fsm_fire devuelve 0 si hay transiciones para el estado actual
- *        pero la función de guarda devuelve false.
- */
-void test_fsm_fire_returns0WhenGuardReturnsFalse(void)
-{
-    fsm_t f;
-    fsm_trans_t tt[] = {
-        {0, is_true, 1, do_nothing},  // Tiene transición para el estado 0
-        {-1, NULL, -1, NULL}
-    };
-
-    fsm_init(&f, tt);
-    is_true_ExpectAndReturn(&f, false); // La guarda devuelve false
-
-    int res = fsm_fire(&f);
-
-    TEST_ASSERT_EQUAL(0, res);
 }
 
 /**
@@ -541,4 +414,115 @@ void test_fsm_fire_returns1WhenGuardFunctionReturnsTrue(void)
     int res = fsm_fire(&f);
 
     TEST_ASSERT_EQUAL(1, res);
+}
+
+/**
+ * @brief Ejecuta la transición cuando la guarda devuelve true.
+ *        Debe devolver 1 y cambiar el estado actual.
+ */
+void test_fsm_fire_executesTransitionWhenGuardIsTrue(void)
+{
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, NULL},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    is_true_ExpectAndReturn(&f, true);
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, res);
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f));
+}
+
+
+/**
+ * @brief No ejecuta la transición si la guarda devuelve false.
+ *        Debe devolver 0 y mantener el estado actual.
+ */
+void test_fsm_fire_doesNotTransitionWhenGuardIsFalse(void)
+{
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, NULL},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    is_true_ExpectAndReturn(&f, false);
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(0, res);
+    TEST_ASSERT_EQUAL(0, fsm_get_state(&f));
+}
+
+
+/**
+ * @brief Ejecuta la transición siempre que la guarda sea NULL (considerada siempre verdadera).
+ *        Debe devolver 1 y cambiar el estado.
+ */
+void test_fsm_fire_transitionsWhenGuardIsNull(void)
+{
+    fsm_trans_t tt[] = {
+        {0, NULL, 1, NULL},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, res);
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f));
+}
+
+
+/**
+ * @brief Devuelve -1 cuando no existen transiciones para el estado actual.
+ *        El estado debe permanecer sin cambios.
+ */
+void test_fsm_fire_returnsMinus1WhenNoTransitionsForCurrentState(void)
+{
+    fsm_trans_t tt[] = {
+        {1, is_true, 2, NULL},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+    f.current_state = 0;
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(-1, res);
+    TEST_ASSERT_EQUAL(0, fsm_get_state(&f));
+}
+
+
+/**
+ * @brief Comprueba que se llama a la función de salida (`out`) si está definida al realizar una transición.
+ */
+void test_fsm_fire_callsOutFunctionIfDefined(void)
+{
+    fsm_trans_t tt[] = {
+        {0, is_true, 1, do_nothing},
+        {-1, NULL, -1, NULL}
+    };
+
+    fsm_t f;
+    fsm_init(&f, tt);
+
+    is_true_ExpectAndReturn(&f, true);
+    do_nothing_Expect(&f);
+
+    int res = fsm_fire(&f);
+
+    TEST_ASSERT_EQUAL(1, res);
+    TEST_ASSERT_EQUAL(1, fsm_get_state(&f));
 }
