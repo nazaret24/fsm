@@ -1,0 +1,57 @@
+name: Ceedling Testing
+on:   
+  push:
+    branches: [main, b3_ci_cd]
+  pull_request:
+    branches: [main, b3_ci_cd]
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Current Repo Clone
+        uses: actions/checkout@v4
+      - name: Install Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7
+      - name: Install Ceedling
+        run: gem install ceedling -v 0.31.1
+      - name: Install gcovr
+        run: pip install gcovr    
+      - name: Run Unit Tests
+        run: |
+          CUR=$PWD; for i in `find . -type d -name 'ceedling'`; do cd $CUR; echo $i; cd $i;ceedling clobber;ceedling test:all; done
+      - name: Ejecuta cobertura
+        run: |
+          cd ceedling
+          ceedling gcov:all utils:gcov 
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
+      - name: Genera documentación Doxygen
+        run: | 
+          doxygen docs/Doxyfile
+
+      - name: Sube resultados como artefacto
+        uses: actions/upload-artifact@v4
+        with:
+          name: cobertura-y-doc
+          path: | 
+            ceedling/build/artifacts/gcov
+            docs/html
+
+      - name: Prepara contenido para GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        run: |
+          mkdir -p gh-pages
+          cp -r ceedling/build/artifacts/gcov/* gh-pages/
+          cp -r docs/html/* gh-pages/
+          touch gh-pages/.nojekyll
+
+      - name: Publica en GitHub Pages
+        if: github.ref == 'refs/heads/main'
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages

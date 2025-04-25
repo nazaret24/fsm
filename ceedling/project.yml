@@ -10,7 +10,7 @@
   # how to use ceedling. If you're not sure, leave this as `gem` and `?`
   :which_ceedling: gem
   :ceedling_version: 1.0.1
-
+ 
   # optional features. If you don't need them, keep them turned off for performance
   :use_mocks: TRUE
   :use_test_preprocessor: :mocks # options are :none, :mocks, :tests, or :all
@@ -68,8 +68,8 @@
     #- report_build_warnings_log
     #- report_tests_gtestlike_stdout
     #- report_tests_ide_stdout
-    - report_tests_log_factory
-    - report_tests_pretty_stdout
+    #- report_tests_log_factory
+    #- report_tests_pretty_stdout
     #- report_tests_raw_output_log
     #- report_tests_teamcity_stdout
 
