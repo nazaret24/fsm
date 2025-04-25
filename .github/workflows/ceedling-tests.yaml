@@ -27,6 +27,8 @@ jobs:
         run: |
           cd ceedling
           ceedling gcov:all utils:gcov 
+      - name: Install Doxygen
+        run: sudo apt-get update && sudo apt-get install -y doxygen
       - name: Genera documentación Doxygen
         run: | 
           doxygen docs/Doxyfile
