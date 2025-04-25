@@ -28,7 +28,7 @@ jobs:
           cd ceedling
           ceedling gcov:all utils:gcov 
       - name: Genera documentación Doxygen
-        run: |
+        run: | 
           doxygen docs/Doxyfile
 
       - name: Sube resultados como artefacto
