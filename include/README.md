@@ -4,6 +4,8 @@
 
 [![pages-build-deployment](https://github.com/nazaret24/fsm/actions/workflows/pages/pages-build-deployment/badge.svg?branch=gh-pages)](https://github.com/nazaret24/fsm/actions/workflows/pages/pages-build-deployment)
 
+[![Web Page](https://github.com/nazaret24/fsm/actions/workflows/ceedling-tests.yaml/badge.svg?branch=main)](https://nazaret24.github.io/fsm/)
+
 Este proyecto implementa una máquina de estados finitos (FSM) usando Ceedling para pruebas unitarias, integración continua (CI) con GitHub Actions y documentación con Doxygen.
 
 ## Documentación
